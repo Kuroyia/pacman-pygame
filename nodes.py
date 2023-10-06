@@ -7,7 +7,7 @@ class Node(object):
         self.position = Vector2(x, y)
         self.neighbors = {UP:None, DOWN:None, LEFT:None, RIGHT:None}
 
-    def __render__(self, screen):
+    def render(self, screen):
         for n in self.neighbors.keys():
             if self.neighbors[n] is not None:
                 line_start = self.position.asTuple()
