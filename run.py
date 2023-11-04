@@ -3,6 +3,8 @@ from pygame.locals import *
 from constants import *
 from pacman import Pacman
 from nodes import NodeGroup
+
+
 class GameController(object):
     def __init__(self):
         pygame.init()
@@ -16,9 +18,8 @@ class GameController(object):
 
     def startGame(self):
         self.setBackground()
-        self.nodes = NodeGroup()
-        self.nodes.setupTestNodes()
-        self.pacman = Pacman(self.nodes.nodeList[0])
+        self.nodes = NodeGroup("level0.txt")
+        self.pacman = Pacman(self.nodes.getStartTempNode())
 
     def update(self):
         dt = self.clock.tick(60) / 1000.0
@@ -36,7 +37,8 @@ class GameController(object):
         self.nodes.render(self.screen)
         self.pacman.render(self.screen)
         pygame.display.update()
-    
+
+
 if __name__ == "__main__":
     game = GameController()
     game.startGame()
