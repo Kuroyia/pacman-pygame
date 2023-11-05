@@ -8,6 +8,8 @@ from ghosts import GhostGroup
 from fruit import Fruit
 from pauser import Pause
 from txt import TextGroup
+from sprites import LifeSprites
+from sprites import MazeSprites
 
 
 class GameController(object):
@@ -22,17 +24,7 @@ class GameController(object):
         self.lives = 5
         self.score = 0
         self.textgroup = TextGroup()
-
-    def restartGame(self):
-        self.lives = 5
-        self.level = 0
-        self.pause.paused = True
-        self.fruit = None
-        self.startGame()
-        self.score = 0
-        self.textgroup.updateScore(self.score)
-        self.textgroup.updateLevel(self.level)
-        self.textgroup.showText(READYTXT)
+        self.lifesprites = LifeSprites(self.lives)
 
     def resetLevel(self):
         self.pause.paused = True
@@ -54,6 +46,10 @@ class GameController(object):
 
     def startGame(self):
         self.setBackground()
+        self.mazesprites = MazeSprites("level0.txt", "level0rotation.txt")
+        self.background = self.mazesprites.constructBackground(
+            self.background, self.level % 5
+        )
         self.nodes = NodeGroup("level0.txt")
         self.nodes.setPortalPair((0, 17), (27, 17))
         homekey = self.nodes.createHomeNodes(11.5, 14)
@@ -77,6 +73,18 @@ class GameController(object):
         self.nodes.denyAccessList(15, 14, UP, self.ghosts)
         self.nodes.denyAccessList(12, 26, UP, self.ghosts)
         self.nodes.denyAccessList(15, 26, UP, self.ghosts)
+
+    def restartGame(self):
+        self.lives = 5
+        self.level = 0
+        self.pause.paused = True
+        self.fruit = None
+        self.startGame()
+        self.score = 0
+        self.textgroup.updateScore(self.score)
+        self.textgroup.updateLevel(self.level)
+        self.textgroup.showText(READYTXT)
+        self.lifesprites.resetLives(self.lives)
 
     def update(self):
         dt = self.clock.tick(60) / 1000.0
@@ -153,6 +161,7 @@ class GameController(object):
                 elif ghost.mode.current is not SPAWN:
                     if self.pacman.alive:
                         self.lives -= 1
+                        self.lifesprites.removeImage()
                         self.pacman.die()
                         self.ghosts.hide()
                         if self.lives <= 0:
@@ -190,13 +199,17 @@ class GameController(object):
 
     def render(self):
         self.screen.blit(self.background, (0, 0))
-        self.nodes.render(self.screen)
         self.pellets.render(self.screen)
         if self.fruit is not None:
             self.fruit.render(self.screen)
         self.pacman.render(self.screen)
         self.ghosts.render(self.screen)
         self.textgroup.render(self.screen)
+        for i in range(len(self.lifesprites.images)):
+            x = self.lifesprites.images[i].get_width() * i
+            y = SCREENHEIGHT - self.lifesprites.images[i].get_height()
+            self.screen.blit(self.lifesprites.images[i], (x, y))
+
         pygame.display.update()
 
 
