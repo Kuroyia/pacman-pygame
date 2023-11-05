@@ -22,9 +22,13 @@ class GameController(object):
         self.setBackground()
         self.nodes = NodeGroup("level0.txt")
         self.nodes.setPortalPair((0, 17), (27, 17))
+        homekey = self.nodes.createHomeNodes(11.5, 14)
+        self.nodes.connectHomeNodes(homekey, (12, 14), LEFT)
+        self.nodes.connectHomeNodes(homekey, (15, 14), RIGHT)
         self.pacman = Pacman(self.nodes.getStartTempNode())
         self.pellets = PelletGroup("level0.txt")
         self.ghost = Ghost(self.nodes.getStartTempNode(), self.pacman)
+        self.ghost.setSpawnNode(self.nodes.getNodeFromTiles(2 + 11.5, 3 + 14))
 
     def update(self):
         dt = self.clock.tick(60) / 1000.0
@@ -32,6 +36,7 @@ class GameController(object):
         self.ghost.update(dt)
         self.pellets.update(dt)
         self.checkPelletEvents()
+        self.checkGhostEvents()
         self.checkEvents()
         self.render()
 
@@ -39,6 +44,11 @@ class GameController(object):
         for event in pygame.event.get():
             if event.type == QUIT:
                 exit()
+
+    def checkGhostEvents(self):
+        if self.pacman.collideGhost(self.ghost):
+            if self.ghost.mode.current is FREIGHT:
+                self.ghost.startSpawn()
 
     def render(self):
         self.screen.blit(self.background, (0, 0))
@@ -53,6 +63,8 @@ class GameController(object):
         if pellet:
             self.pellets.numEaten += 1
             self.pellets.pelletList.remove(pellet)
+            if pellet.name == POWERPELLET:
+                self.ghost.startFreight()
 
 
 if __name__ == "__main__":
