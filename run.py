@@ -17,6 +17,27 @@ class GameController(object):
         self.clock = pygame.time.Clock()
         self.fruit = None
         self.pause = Pause(True)
+        self.level = 0
+        self.lives = 5
+
+    def restartGame(self):
+        self.lives = 5
+        self.level = 0
+        self.pause.paused = True
+        self.fruit = None
+        self.startGame()
+
+    def resetLevel(self):
+        self.pause.paused = True
+        self.pacman.reset()
+        self.ghosts.reset()
+        self.fruit = None
+
+    def nextLevel(self):
+        self.showEntities()
+        self.level += 1
+        self.pause.paused = True
+        self.startGame()
 
     def setBackground(self):
         self.background = pygame.surface.Surface(SCREENSIZE).convert()
@@ -62,11 +83,12 @@ class GameController(object):
                 exit()
             elif event.type == KEYDOWN:
                 if event.key == K_SPACE:
-                    self.pause.setPause(playerPaused=True)
-                    if not self.pause.paused:
-                        self.showEntities()
-                    else:
-                        self.hideEntities()
+                    if self.pacman.alive:
+                        self.pause.setPause(playerPaused=True)
+                        if not self.pause.paused:
+                            self.showEntities()
+                        else:
+                            self.hideEntities()
 
     def checkPelletEvents(self):
         pellet = self.pacman.eatPellets(self.pellets.pelletList)
@@ -75,6 +97,9 @@ class GameController(object):
             self.pellets.pelletList.remove(pellet)
             if pellet.name == POWERPELLET:
                 self.ghosts.startFreight()
+            if self.pellets.isEmpty():
+                self.hideEntities()
+                self.pause.setPause(pauseTime=3, func=self.nextLevel)
 
     def checkGhostEvents(self):
         for ghost in self.ghosts:
@@ -84,6 +109,15 @@ class GameController(object):
                     ghost.visible = False
                     self.pause.setPause(pauseTime=1, func=self.showEntities)
                     ghost.startSpawn()
+                elif ghost.mode.current is not SPAWN:
+                    if self.pacman.alive:
+                        self.lives -= 1
+                        self.pacman.die()
+                        self.ghosts.hide()
+                        if self.lives <= 0:
+                            self.pause.setPause(pauseTime=3, func=self.restartGame)
+                        else:
+                            self.pause.setPause(pauseTime=3, func=self.resetLevel)
 
     def showEntities(self):
         self.pacman.visible = True
